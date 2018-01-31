@@ -12,7 +12,7 @@ return [
         'id' => [
             'title' => 'ID',
         ],
-        'topic' => [
+        'title' => [
             'title'    => '话题',
             'sortable' => false,
             'output'   => function ($value, $model) {

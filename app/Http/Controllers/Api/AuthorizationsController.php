@@ -11,9 +11,13 @@ use Zend\Diactoros\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\AuthorizationServer;
+use App\Traits\PassportToken;
+
+use Illuminate\Database\Eloquent\Model\Client;
 
 class AuthorizationsController extends Controller
 {
+    use PassportToken;
     public function store(AuthorizationRequest $originRequest, AuthorizationServer $server, ServerRequestInterface $serverRequest)
     {
         try {
@@ -50,7 +54,7 @@ class AuthorizationsController extends Controller
 
         switch ($type) {
         case 'weixin':
-            $user = User::where('weixin_unionid', $oauthUser->offsetGet('unionid'))->first();
+            $user = User::where('weixin_openid', $oauthUser->offsetGet('openid'))->first();
 
             // 没有用户，默认创建一个用户
             if (!$user) {
@@ -58,15 +62,15 @@ class AuthorizationsController extends Controller
                     'name' => $oauthUser->getNickname(),
                     'avatar' => $oauthUser->getAvatar(),
                     'weixin_openid' => $oauthUser->getId(),
-                    'weixin_unionid' => $oauthUser->offsetGet('unionid'),
+                    //'weixin_unionid' => $oauthUser->offsetGet('unionid'),
                 ]);
             }
 
             break;
         }
 
-        $token = Auth::guard('api')->fromUser($user);
-        return $this->respondWithToken($token)->setStatusCode(201);
+        $result = $this->getBearerTokenByUser($user, 1, false);
+        return $this->response->array($result)->setStatusCode(201);
     }
 
     public function update(AuthorizationServer $server, ServerRequestInterface $serverRequest)
